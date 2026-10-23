@@ -138,3 +138,12 @@ flowchart LR
   D --> E[Email to volunteers]
   B -.->|integration coded,<br/>account access pending| F[Amazon Bedrock]
 ```
+
+## Team
+
+| Name | Role | GitHub |
+|---|---|---|
+| Jayanth H R | Team lead, backend and AWS integration (DynamoDB, SNS) | [@jayanth800](https://github.com/jayanth800) |
+| Keerthana J | UI and map design (interactive map, shelter panel) | [@Keerthana-J-1404](https://github.com/Keerthana-J-1404) |
+| Chandana T | Scenario data, testing and quality checks | [@chandanat710-sudo](https://github.com/chandanat710-sudo) |
+| Shirdhar | Documentation, architecture diagram, demo video and submission | [@sridharr-1](https://github.com/sridharr-1) |
