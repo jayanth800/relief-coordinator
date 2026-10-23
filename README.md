@@ -112,3 +112,13 @@ the app logs a warning and keeps working with the built-in demo logic.
    ```
    Confirm the subscription from the email AWS sends you.
 5. Restart with `npm start`. The startup log shows which services are active.
+
+```mermaid
+flowchart LR
+  A[AI chat client<br/>Claude / MCP host] -->|MCP over HTTP| B[Relief Coordinator<br/>MCP server - Node.js]
+  B -->|interactive map UI| A
+  B -->|shelters, volunteers,<br/>stock, assignments| C[(Amazon DynamoDB)]
+  B -->|assignment alerts| D[Amazon SNS]
+  D --> E[Email to volunteers]
+  B -.->|integration coded,<br/>account access pending| F[Amazon Bedrock]
+```
