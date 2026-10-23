@@ -153,7 +153,7 @@ function panel(s: State, sel: Shelter | null): string {
     <div class="send">${sendInputs}</div>
     <h3>Volunteers (nearest first)</h3>
     <div class="vols">${volList}</div>
-    ${suggestion && suggestion.shelterId === sel.id ? `<div class="reason">${esc(suggestion.reason)}</div>` : ""}
+    ${suggestion && suggestion.shelterId === sel.id ? `<div class="reason"><b>${suggestion.source === "bedrock" ? "AI suggestion (Amazon Bedrock)" : "Suggestion (rule-based)"}:</b> ${esc(suggestion.reason)}</div>` : ""}
     <div class="actions">
       <button data-action="suggest" ${busy ? "disabled" : ""}>Suggest allocation</button>
       <button class="primary" data-action="assign" ${busy || (picked.size === 0 && SUPPLY_KEYS.every((k) => !plan[k])) ? "disabled" : ""}>Confirm assignment</button>

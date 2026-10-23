@@ -1,3 +1,4 @@
+import "dotenv/config";
 import {
   registerAppResource,
   registerAppTool,
@@ -11,6 +12,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
+import * as aws from "./aws.js";
 import * as store from "./data.js";
 
 const DIST_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "dist");
@@ -65,7 +67,13 @@ function createServer(): McpServer {
       inputSchema: { shelterId: z.string().optional() },
     },
     async ({ shelterId }) => {
-      const suggestion = store.suggest(shelterId);
+      let suggestion: store.Suggestion | null = null;
+      try {
+        suggestion = await aws.bedrockSuggest(shelterId);
+      } catch (err) {
+        console.warn("[Bedrock] failed, using rule-based suggestion:", err instanceof Error ? err.message : err);
+      }
+      suggestion = suggestion ?? store.suggest(shelterId);
       if (!suggestion) return reply("Shelter not found.", { message: "Shelter not found." }, true);
       return reply(suggestion.reason, { state: store.snapshot(), suggestion });
     },
@@ -86,7 +94,18 @@ function createServer(): McpServer {
     async ({ shelterId, volunteerIds, supplies }) => {
       const result = store.assign(shelterId, volunteerIds, supplies);
       if (!result.ok) return reply(result.error, { message: result.error }, true);
-      const msg = `Assignment ${result.assignment.id} confirmed: ${volunteerIds.length} volunteer(s) and supplies sent.`;
+      await aws.persist();
+      const snap = store.snapshot();
+      const shelterName = snap.shelters.find((x) => x.id === shelterId)?.name ?? shelterId;
+      const names = volunteerIds.map((id) => snap.volunteers.find((v) => v.id === id)?.name ?? id).join(", ");
+      const sent = Object.entries(result.assignment.supplies).map(([k, n]) => `${n} ${k}`).join(", ") || "no supplies";
+      const notified = await aws.notify(
+        `Relief assignment: ${shelterName}`,
+        `Assignment ${result.assignment.id}: ${names || "no volunteers"} go to ${shelterName}. Supplies: ${sent}.`,
+      );
+      const msg =
+        `Assignment ${result.assignment.id} confirmed: ${volunteerIds.length} volunteer(s) and supplies sent.` +
+        (notified ? " Notification sent via Amazon SNS." : "");
       return reply(msg, { state: store.snapshot(), suggestion: null, message: msg });
     },
   );
@@ -114,7 +133,9 @@ function createServer(): McpServer {
       inputSchema: {},
     },
     async () => {
+      const oldIds = store.exportDb().assignments.map((a) => a.id);
       store.resetStore();
+      await aws.persist(oldIds);
       return reply("Demo data reset.", { state: store.snapshot(), suggestion: null, sitrep: "", message: "Demo reset." });
     },
   );
@@ -149,6 +170,7 @@ app.all("/mcp", async (req, res) => {
   }
 });
 
+await aws.initPersistence();
 const PORT = Number(process.env.PORT ?? 3001);
 app.listen(PORT, () => {
   console.log(`Relief Coordinator MCP server running at http://localhost:${PORT}/mcp`);

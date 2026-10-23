@@ -8,7 +8,7 @@ export const SUPPLY_KEYS: SupplyKey[] = ["water", "food", "medical", "blankets"]
 export interface Supply { have: number; need: number }
 export type Level = "critical" | "warning" | "ok";
 
-interface ShelterRaw {
+export interface ShelterRaw {
   id: string;
   name: string;
   x: number; // map units, map is 100 x 70
@@ -49,6 +49,7 @@ export interface Suggestion {
   volunteerIds: string[];
   supplies: Partial<Record<SupplyKey, number>>;
   reason: string;
+  source?: "bedrock" | "rules";
 }
 
 export interface State {
@@ -64,7 +65,7 @@ export interface State {
   };
 }
 
-interface Db {
+export interface Db {
   shelters: ShelterRaw[];
   volunteers: Volunteer[];
   depot: Depot;
@@ -130,6 +131,14 @@ export function resetStore(): void {
   db = seed();
 }
 
+/** Used by the AWS persistence layer (aws.ts). */
+export function exportDb(): Db {
+  return JSON.parse(JSON.stringify(db)) as Db;
+}
+export function importDb(d: Db): void {
+  db = d;
+}
+
 export function snapshot(): State {
   const shelters = db.shelters.map(score);
   return {
@@ -180,7 +189,7 @@ export function suggest(shelterId?: string): Suggestion | null {
     `Sending the nearest ${picked.length} free volunteer(s)` +
     (picked.some((v) => v.skill === "medic") ? ", including a medic for the medical shortage." : ".");
 
-  return { shelterId: target.id, volunteerIds: picked.map((v) => v.id), supplies, reason };
+  return { shelterId: target.id, volunteerIds: picked.map((v) => v.id), supplies, reason, source: "rules" };
 }
 
 export type AssignResult = { ok: true; assignment: Assignment } | { ok: false; error: string };

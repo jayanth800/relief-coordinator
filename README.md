@@ -96,3 +96,19 @@ The demo runs fully offline so it never fails on stage. Upgrade it one piece at 
 This project is pinned to `@modelcontextprotocol/ext-apps` 1.x with `@modelcontextprotocol/sdk` 1.x and zod 3.
 ext-apps 2.x uses different packages (`@modelcontextprotocol/server`, zod 4) and needs code changes.
 If `npm install` ever complains about peer dependencies, delete `node_modules` and `package-lock.json` and try again.
+
+## Using AWS (DynamoDB, Bedrock, SNS)
+
+All three are optional and controlled by `.env` (copy `.env.example` to `.env`). If any AWS call fails,
+the app logs a warning and keeps working with the built-in demo logic.
+
+1. `aws configure` (once), then set `AWS_REGION` in `.env`.
+2. **DynamoDB**: set `USE_DYNAMODB=true`. The table `relief-coordinator` is created and seeded on first start.
+3. **Bedrock**: set `USE_BEDROCK=true` and `BEDROCK_MODEL_ID` to a model you can use in your region.
+4. **SNS**: create a topic and an email subscription, then put the topic ARN in `SNS_TOPIC_ARN`:
+   ```
+   aws sns create-topic --name relief-alerts
+   aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint you@example.com
+   ```
+   Confirm the subscription from the email AWS sends you.
+5. Restart with `npm start`. The startup log shows which services are active.
