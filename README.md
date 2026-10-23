@@ -1,4 +1,20 @@
-# Relief Coordinator (MCP App)
+# Relief Coordinator: an interactive disaster-relief map inside an AI chat
+
+During floods and other disasters, coordinators juggle scattered lists of shelters, supplies and volunteers, and decisions are slow. Relief Coordinator is an MCP App that shows an interactive map directly in the AI chat, using a demo scenario with sample data. Shelters are colour-coded by urgency, and clicking one shows its supply gaps. The app suggests which volunteers and supplies to send, and a human coordinator confirms the assignment with one click. Every assignment is saved, and an alert is sent.
+
+## AWS services used
+
+- **Amazon DynamoDB** stores shelters, volunteers, depot stock and assignments, so data persists between sessions.
+- **Amazon SNS** sends an alert when an assignment is confirmed (email in this demo, extendable to SMS for volunteers).
+- **Amazon Bedrock** integration is implemented in the code for AI-written allocation reasoning. It currently falls back to rule-based logic because Bedrock model access is still pending on our new AWS account.
+
+## Safety by design
+
+The AI only suggests, and a human always confirms.
+
+## Next steps
+
+Deploy on AWS App Runner, enable Bedrock reasoning, use Amazon Location Service for real map tiles and routes, and add multilingual alerts with Amazon Translate.# Relief Coordinator (MCP App)
 
 An interactive disaster-relief map that renders **inside an AI chat**. A coordinator sees shelters
 colour-coded by urgency, clicks one to see its supply gaps, gets a suggested allocation of
