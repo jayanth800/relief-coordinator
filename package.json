@@ -1,0 +1,29 @@
+{
+  "name": "relief-coordinator",
+  "version": "1.0.0",
+  "description": "Disaster Relief Coordinator - an MCP App with an interactive map for assigning volunteers and supplies",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "start": "npm run build && tsx server.ts",
+    "serve": "tsx server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.5",
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.0.0"
+  }
+}

@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Relief Coordinator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #eef2f5; --panel: #ffffff; --ink: #14222e; --muted: #5d6e7c; --line: #d3dce3;
+      --land: #e6ece6; --flood: #9cc7e4; --road: #c9d2d8;
+      --crit: #c8332f; --warn: #d99a1b; --ok: #2e8b62; --accent: #1b5e8a; --accent-ink: #ffffff;
+      --bar: #dfe7ed;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1a23; --panel: #17242f; --ink: #e6edf2; --muted: #93a5b3; --line: #2a3b49;
+        --land: #1b2a2a; --flood: #1f4b6b; --road: #2f414e;
+        --crit: #ef5a55; --warn: #eab34a; --ok: #4cc38f; --accent: #5aa9d6; --accent-ink: #0f1a23;
+        --bar: #243543;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      font: 14px/1.45 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif; }
+    h1 { font-size: 18px; margin: 0; letter-spacing: 0.01em; }
+    h2 { font-size: 15px; margin: 0 0 6px; }
+    h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); font-weight: 600; }
+    .wrap { padding: 12px; max-width: 1100px; margin: 0 auto; }
+    .top { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; }
+    .stat b { font-size: 16px; }
+    .stat span { color: var(--muted); margin-left: 4px; }
+    .stat.crit b { color: var(--crit); }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+    svg.map { width: 100%; height: auto; display: block; border-radius: 6px; background: var(--land); }
+    .flood { fill: var(--flood); opacity: 0.75; }
+    .road { stroke: var(--road); stroke-width: 0.9; fill: none; }
+    .shelter { cursor: pointer; }
+    .shelter circle { stroke: var(--panel); stroke-width: 0.7; }
+    .shelter.critical circle { fill: var(--crit); }
+    .shelter.warning circle { fill: var(--warn); }
+    .shelter.ok circle { fill: var(--ok); }
+    .shelter.sel circle { stroke: var(--ink); stroke-width: 1.2; }
+    .shelter text.pct { fill: #fff; font-size: 2.3px; font-weight: 700; text-anchor: middle; pointer-events: none; }
+    .shelter text.lbl { fill: var(--ink); font-size: 2.3px; text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: var(--land); stroke-width: 0.5px; }
+    .vol rect { fill: var(--accent); }
+    .vol.assigned rect { fill: var(--muted); opacity: 0.6; }
+    .vol.picked rect { stroke: var(--ink); stroke-width: 0.5; }
+    .depot polygon { fill: var(--ink); }
+    .depot text { fill: var(--ink); font-size: 2.2px; text-anchor: middle; paint-order: stroke; stroke: var(--land); stroke-width: 0.5px; }
+    .route { stroke: var(--ink); stroke-width: 0.6; stroke-dasharray: 1.6 1.2; fill: none; }
+    .vroute { stroke: var(--accent); stroke-width: 0.4; fill: none; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; color: var(--muted); font-size: 12px; }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: -1px; }
+    .sq { border-radius: 2px; }
+    .bar-row { display: grid; grid-template-columns: 92px 1fr 76px; gap: 8px; align-items: center; margin: 4px 0; font-size: 13px; }
+    .bar { height: 8px; background: var(--bar); border-radius: 4px; overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--ok); }
+    .bar i.low { background: var(--crit); } .bar i.mid { background: var(--warn); }
+    .num { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .vols { display: grid; gap: 4px; }
+    .vols label { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+    .vols label small { margin-left: auto; color: var(--muted); }
+    .send { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 10px; }
+    .send label { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 13px; }
+    .send input { width: 72px; padding: 3px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); }
+    .actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+    button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    button:focus-visible, input:focus-visible, .shelter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .reason { background: var(--bg); border-left: 3px solid var(--accent); padding: 6px 8px; border-radius: 4px; margin: 8px 0; }
+    .msg { margin-top: 8px; color: var(--accent); }
+    pre.sitrep { white-space: pre-wrap; background: var(--bg); padding: 8px; border-radius: 6px; font: 12px/1.45 ui-monospace, Consolas, monospace; margin: 8px 0 0; max-height: 220px; overflow: auto; }
+    .empty { color: var(--muted); padding: 24px 8px; text-align: center; }
+    .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="root"><p class="empty">Waiting for the relief map...</p></div>
+  <script type="module" src="/src/mcp-app.ts"></script>
+</body>
+</html>
